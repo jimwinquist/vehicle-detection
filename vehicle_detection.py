@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.image as mpimg
+from skimage.feature import hog
 
 def draw_boxes(img, bboxes, color=(0, 0, 255), thickness=6):
     '''
@@ -21,7 +22,7 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thickness=6):
 def data_look(car_list, notcar_list):
     '''
     Gets basic information about the images in the dataset
-    
+
     :param car_list:
     :param notcar_list:
     :return:
@@ -35,3 +36,26 @@ def data_look(car_list, notcar_list):
     data_dict["image_shape"] = example_img.shape
     data_dict["data_type"] = example_img.dtype
     return data_dict
+
+def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
+    '''
+    Gets HOG features from an image
+
+    :param img:
+    :param orient:
+    :param pix_per_cell:
+    :param cell_per_block:
+    :param vis:
+    :param feature_vec:
+    :return:
+    '''
+    if vis == True:
+        features, hog_image = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
+                                  cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=False,
+                                  visualise=True, feature_vector=False)
+        return features, hog_image
+    else:
+        features = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
+                       cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=False,
+                       visualise=False, feature_vector=feature_vec)
+        return features
