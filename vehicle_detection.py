@@ -9,6 +9,7 @@ from skimage.feature import hog
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from moviepy.editor import VideoFileClip
 
 def data_look(car_list, notcar_list):
     '''
@@ -162,13 +163,13 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     return window_list
 
 # Define a function to draw bounding boxes
-def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
+def draw_boxes(img, bboxes, color=(0, 0, 255), thickness=6):
     # Make a copy of the image
     imcopy = np.copy(img)
     # Iterate through the bounding boxes
     for bbox in bboxes:
         # Draw a rectangle given bbox coordinates
-        cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
+        cv2.rectangle(imcopy, bbox[0], bbox[1], color, thickness)
     # Return the image copy with boxes drawn
     return imcopy
 
@@ -250,28 +251,17 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     #8) Return windows for positive detections
     return on_windows
 
-def train_classifier():
+def train_classifier(color_space='RGB', orient=9, pix_per_cell=8, cell_per_block=2,
+                     hog_channel = 0, spatial_size=(32, 32), hist_bins=32,
+                     spatial_feat=True, hist_feat=True, hog_feat=True):
     cars = glob.glob('vehicles/*/*.png')
     notcars = glob.glob('non-vehicles/*/*.png')
 
     # Reduce the sample size because
     # The quiz evaluator times out after 13s of CPU time
-    sample_size = 1000
+    sample_size = 8792
     cars = cars[0:sample_size]
     notcars = notcars[0:sample_size]
-
-    ### TODO: Tweak these parameters and see how the results change.
-    color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9  # HOG orientations
-    pix_per_cell = 8 # HOG pixels per cell
-    cell_per_block = 2 # HOG cells per block
-    hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
-    spatial_size = (16, 16) # Spatial binning dimensions
-    hist_bins = 16    # Number of histogram bins
-    spatial_feat = True # Spatial features on or off
-    hist_feat = True # Histogram features on or off
-    hog_feat = True # HOG features on or off
-    y_start_stop = [500, 719] # Min and max in y to search in slide_window()
 
     car_features = extract_features(cars, color_space=color_space,
                             spatial_size=spatial_size, hist_bins=hist_bins,
@@ -315,11 +305,95 @@ def train_classifier():
     print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
     # Check the prediction time for a single sample
     t=time.time()
-    n_predict = 100
+    n_predict = 10
     print('My SVC predicts: ', svc.predict(X_test[0:n_predict]))
     print('For these',n_predict, 'labels: ', y_test[0:n_predict])
     t2 = time.time()
     print(round(t2-t, 5), 'Seconds to predict', n_predict,'labels with SVC')
 
-def process_image(image):
-    pass
+    return svc, X_scaler
+
+def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, cell_per_block=2,
+                     hog_channel = 0, spatial_size=(32, 32), hist_bins=32,
+                     spatial_feat=True, hist_feat=True, hog_feat=True, displayType='final'):
+    # Uncomment the following line if you extracted training
+    # data from .png images (scaled 0 to 1 by mpimg) and the
+    # image you are searching is a .jpg (scaled 0 to 255)
+    draw_image = image.copy()
+    image = image.copy().astype(np.float32)/255
+
+
+    y_start_stop = [380, 650] # Min and max in y to search in slide_window()
+
+    windows_32 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+                        xy_window=(48, 48), xy_overlap=(0.5, 0.5))
+    windows_64 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+                        xy_window=(64, 64), xy_overlap=(0.5, 0.5))
+    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+                        xy_window=(128, 128), xy_overlap=(0.5, 0.5))
+    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+                        xy_window=(256, 256), xy_overlap=(0.5, 0.5))
+
+    windows = windows_32 + windows_64 + windows_128
+
+    hot_windows = search_windows(image, windows, svc, X_scaler, color_space=color_space,
+                            spatial_size=spatial_size, hist_bins=hist_bins,
+                            orient=orient, pix_per_cell=pix_per_cell,
+                            cell_per_block=cell_per_block,
+                            hog_channel=hog_channel, spatial_feat=spatial_feat,
+                            hist_feat=hist_feat, hog_feat=hog_feat)
+
+    window_img = draw_boxes(draw_image, hot_windows, color=(0, 255, 0), thickness=5)
+    return window_img
+
+#------------------------------------------------------------------------------
+def processVideo(clip, type):
+    '''
+    Processed video images and returns the type of display specified.
+
+    :param clip: input video clip
+    :param type: type of video to display
+    :return: processed video clip
+    '''
+    ### TODO: Tweak these parameters and see how the results change.
+    color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    orient = 9  # HOG orientations
+    pix_per_cell = 8 # HOG pixels per cell
+    cell_per_block = 2 # HOG cells per block
+    hog_channel = 0#"ALL" # Can be 0, 1, 2, or "ALL"
+    spatial_size = (16, 16) # Spatial binning dimensions
+    hist_bins = 16    # Number of histogram bins
+    spatial_feat = True # Spatial features on or off
+    hist_feat = True # Histogram features on or off
+    hog_feat = True # HOG features on or off
+
+
+    svc, X_scaler = train_classifier(color_space=color_space,
+                            spatial_size=spatial_size, hist_bins=hist_bins,
+                            orient=orient, pix_per_cell=pix_per_cell,
+                            cell_per_block=cell_per_block,
+                            hog_channel=hog_channel, spatial_feat=spatial_feat,
+                            hist_feat=hist_feat, hog_feat=hog_feat)
+
+    def process(image):
+        return pipeline(image, svc, X_scaler, color_space=color_space,
+                            spatial_size=spatial_size, hist_bins=hist_bins,
+                            orient=orient, pix_per_cell=pix_per_cell,
+                            cell_per_block=cell_per_block,
+                            hog_channel=hog_channel, spatial_feat=spatial_feat,
+                            hist_feat=hist_feat, hog_feat=hog_feat, displayType=type)
+    return clip.fl_image(process)
+
+#------------------------------------------------------------------------------
+def extractVideoFrames():
+    '''
+    Uses moveipy and the pipeline developed above to render each frame of the
+    input video as a given type.
+
+    :return: output processed video
+    '''
+    videoType = 'final'
+    project_output = 'video/{0}.mp4'.format(videoType)
+    input_clip = VideoFileClip("project_video.mp4")
+    project_clip = input_clip.fx(processVideo, videoType)
+    project_clip.write_videofile(project_output, audio=False)
