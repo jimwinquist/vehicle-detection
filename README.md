@@ -1,6 +1,6 @@
-**Vehicle Detection Project**
+#Vehicle Detection Project
 
-###Overview
+##Overview
 The goals / steps of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
@@ -18,9 +18,9 @@ The goals / steps of this project are the following:
 [image6]: ./output_images/final.png
 [video1]: ./video/final.mp4
 
-###Histogram of Oriented Gradients (HOG)
+##Histogram of Oriented Gradients (HOG)
 
-#### Extracting HOG Features.
+### Extracting HOG Features.
 
 The code for this step is contained in lines 87 through 135 of the file called `vehicle_detection.py` in the function `extract_features()`.  
 
@@ -36,16 +36,16 @@ Here is an example of the features extracted using the final parameters I settle
 
 ![alt text][image2]
 
-####Choosing HOG parameters.
+###Choosing HOG parameters.
 
 I experimented with various parameters and using different hog channels and in the end I chose the one that seemed to provide the best accuracy over the entire dataset. I ended up using only HOG channel 0 combined with color histogram features, and spatial histogram features. I think there is still a lot of exploration that could be done in this area though to find evbetter parameters. I was trying to balance the need for speed of prediction with getting the best accuracy possible, and I settled on the set of parameters I chose by trying to find the sweet spot where I wasn't including too many features, but just enough to accurately classify the test windows as vehicle or non-vehicle.
 
-####Training a Classifier
+###Training a Classifier
 The code for this step is contained in lines 300 through 360 of the file called `vehicle_detection.py` in the function `train_classifier()`.
 
 I trained a linear SVM using a balanced sample of vehicle and non-vehicle images from the data set. Using the feature extraction method described above, I extracted features for both vehicle and non-vehicle images and scaled the features to have zero mean and unit variance. I then split the data into 80% training set and 20% test set for validating the accuracy of the classifier. With image in the 'YUV' color space, using Hog Channel 0, combined with color and spatial histograms, I was able to achieve approximately 0.985 accuracy on the test set. I was able to achieve higher accuracy on the order of 0.99 using slightly different parameters but it effected the run time and space considerations significantly, so I decided to pay a slight cost on accuracy to improve performance.
 
-###Sliding Window Search
+##Sliding Window Search
 
 The code for this step is contained in lines 152 through 221 of the file called `vehicle_detection.py` in the functions `slide_window()` and `search_windows()`.
 
@@ -53,7 +53,7 @@ I tested out different window sizes looking for both the minimum window size tha
 
 ![alt text][image3]
 
-####Vehicle Detection Pipeline
+###Vehicle Detection Pipeline
 
 One of the more challenging parts of doing vehicle deteciton was in trying to eliminate the large number of false positives that occured in the sliding window search. To eliminate these, I first tried to make sure that the region of interest where I was searching was constrained to the road surface. I chose global values for the search space, but in the future I would like to experiment with deriving these values dynamically using the lane finding process that I've developed. 
 
@@ -64,19 +64,18 @@ Below is an example of the raw detections for a test image:
 ![alt text][image4]
 ---
 
-### Video Implementation
+## Video Implementation
 
-####Here's a [link to my video result](./video/final.mp4)
+###Here's a [link to my video result](./video/final.mp4)
 
 
-####Eliminating False Positives
+###Eliminating False Positives
 
 The code for this step is contained in lines 362 through 422 of the file called `vehicle_detection.py` in the function `pipeline()`. Here I have all the video processing steps for defining the search windows, averaging them over multiple frames, and applying a heatmap and threshold for eliminating false positives.
 
 After using the extracted features to make detections for each frame of the video, the other thing that was critical was to apply a heat map to accumulate and average detections over several frames of video. By applying a threshold to the averaged heat map, it made sure that only really strong detections were kept for the final output. This greatly reduces the number of false positives by eliminating detections that only occur on a single frame but aren't detected on subsequent frames. This leaves you with only the detections that are truly associated with a vehicle and allows you to group the heat map detections into discrete labels associated with multiple vehicles being detected. Using this final heat map I was able to draw the bounding boxes to accurately identify the vehicles in the image.  
 
 ### Raw Detections
-
 ![alt text][image4]
 
 ### Heat Map
@@ -87,7 +86,7 @@ After using the extracted features to make detections for each frame of the vide
 
 ---
 
-###Discussion
+##Discussion
 
 Overall I am happy with the initial implementation, and the detection seems to be working reasonably well for detecting multiple cars in a video stream. My current pipeline still detects a few false positives here and there and I would like to continue to work to remove them through better thresholding. Another area that I would like to improve is getting abetter fit for the bounding boxes around the vehicles detected. Right now the bounding moxes are a little jumpy and don't always surround the entire vehicle. 
 
