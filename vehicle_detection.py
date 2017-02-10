@@ -379,13 +379,13 @@ def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, 
 
     windows_48 = slide_window(image, x_start_stop=[600, None], y_start_stop=[380, 470],
                         xy_window=(48, 48), xy_overlap=(0.5, 0.5))
-    windows_64 = slide_window(image, x_start_stop=[540, None], y_start_stop=[390, 520],
+    windows_64 = slide_window(image, x_start_stop=[600, None], y_start_stop=[390, 520],
                         xy_window=(64, 64), xy_overlap=(0.5, 0.5))
-    windows_96 = slide_window(image, x_start_stop=[500, None], y_start_stop=[400, 580],
+    windows_96 = slide_window(image, x_start_stop=[600, None], y_start_stop=[400, 580],
                         xy_window=(96, 96), xy_overlap=(0.8, 0.8))
-    windows_128 = slide_window(image, x_start_stop=[440, None], y_start_stop=[410, 640],
+    windows_128 = slide_window(image, x_start_stop=[600, None], y_start_stop=[410, 640],
                         xy_window=(128, 128), xy_overlap=(0.8, 0.8))
-    windows_256 = slide_window(image, x_start_stop=[380, None], y_start_stop=[420, 680],
+    windows_256 = slide_window(image, x_start_stop=[600, None], y_start_stop=[420, 680],
                         xy_window=(256, 256), xy_overlap=(0.5, 0.5))
 
     windows = windows_48 + windows_64 + windows_96 + windows_128 + windows_256
@@ -408,7 +408,7 @@ def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, 
 
     heatmap = np.zeros_like(draw_image[:,:,0]).astype(np.float)
     heatmap = add_heat(heatmap, all_windows)
-    heatmap = (apply_threshold(heatmap, 2)*255).astype('uint8')
+    heatmap = (apply_threshold(heatmap, 10)*255).astype('uint8')
     labels = label(heatmap)
 
     if displayType == 'detection':
