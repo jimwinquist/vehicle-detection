@@ -49,7 +49,7 @@ I trained a linear SVM using a balanced sample of vehicle and non-vehicle images
 
 The code for this step is contained in lines 152 through 221 of the file called `vehicle_detection.py` in the functions `slide_window()` and `search_windows()`.
 
-I tested out different window sizes looking for both the minimum window size that could accurately detect car positions, and the maximum window size that could accurately detect car positions. For the minimum window size I found that 48x48 windows worked relatively well, and for the maximum I chose 128x128. Then I chose two intermediate window sizes in between to make sure that as the cars moved into the distance I could pick up subtle variations due to their depth in the image. Since the cars are constrained to the road way I also limited the search space to only look in the lower half of the image and not search areas that contain mostly sky, or trees or other environment features. For the overlap, I found that significant overlap didn't didn't help that much with detection and just increased the time it took to do detection, so I kept an overlap of around 0.5 for each window.
+I tested out different window sizes looking for both the minimum window size that could accurately detect car positions, and the maximum window size that could accurately detect car positions. For the minimum window size I found that 48x48 windows worked relatively well, and for the maximum I chose 256x256. Then I chose three intermediate window sizes in between and staggered them to make sure that as the cars moved into the distance I could pick up subtle variations due to their depth in the image. Since the cars are constrained to the road way I also limited the search space to only look in the lower half of the image and not search areas that contain mostly sky, or trees or other environment features. For the overlap, I found that significant overlap didn't didn't help that much with detection and just increased the time it took to do detection, so I kept an overlap of around 0.5 for each window.
 
 ![alt text][image3]
 
@@ -57,7 +57,7 @@ I tested out different window sizes looking for both the minimum window size tha
 
 One of the more challenging parts of doing vehicle deteciton was in trying to eliminate the large number of false positives that occured in the sliding window search. To eliminate these, I first tried to make sure that the region of interest where I was searching was constrained to the road surface. I chose global values for the search space, but in the future I would like to experiment with deriving these values dynamically using the lane finding process that I've developed. 
 
-Ultimately I searched on two scales using YUV 1-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided the following result.  
+Ultimately I searched on 5 scales using YUV color space, 1-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided the following result.  
 
 Below is an example of the raw detections for a test image:
 
