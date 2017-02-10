@@ -9,7 +9,17 @@ from skimage.feature import hog
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from scipy.ndimage.measurements import label
 from moviepy.editor import VideoFileClip
+
+windows_1 = None
+windows_2 = None
+windows_3 = None
+windows_4 = None
+windows_5 = None
+windows_6 = None
+windows_7 = None
+windows_8 = None
 
 def data_look(car_list, notcar_list):
     '''
@@ -28,6 +38,11 @@ def data_look(car_list, notcar_list):
     data_dict["image_shape"] = example_img.shape
     data_dict["data_type"] = example_img.dtype
     return data_dict
+
+def showImage(name, image):
+    cv2.imshow(name, cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                         vis=False, feature_vec=True):
@@ -251,6 +266,37 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     #8) Return windows for positive detections
     return on_windows
 
+def add_heat(heatmap, bbox_list):
+    # Iterate through list of bboxes
+    for box in bbox_list:
+        # Add += 1 for all pixels inside each bbox
+        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+
+    # Return updated heatmap
+    return heatmap
+
+def apply_threshold(heatmap, threshold):
+    # Zero out pixels below the threshold
+    heatmap[heatmap <= threshold] = 0
+    # Return thresholded map
+    return heatmap
+
+def draw_labeled_bboxes(img, labels, color=(0, 255, 0), thickness=5):
+    # Iterate through all detected cars
+    for car_number in range(1, labels[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (labels[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        # Draw the box on the image
+        cv2.rectangle(img, bbox[0], bbox[1], color, thickness)
+    # Return the image
+    return img
+
 def train_classifier(color_space='RGB', orient=9, pix_per_cell=8, cell_per_block=2,
                      hog_channel = 0, spatial_size=(32, 32), hist_bins=32,
                      spatial_feat=True, hist_feat=True, hog_feat=True):
@@ -259,7 +305,7 @@ def train_classifier(color_space='RGB', orient=9, pix_per_cell=8, cell_per_block
 
     # Reduce the sample size because
     # The quiz evaluator times out after 13s of CPU time
-    sample_size = 8792
+    sample_size = 2000
     cars = cars[0:sample_size]
     notcars = notcars[0:sample_size]
 
@@ -319,22 +365,31 @@ def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, 
     # Uncomment the following line if you extracted training
     # data from .png images (scaled 0 to 1 by mpimg) and the
     # image you are searching is a .jpg (scaled 0 to 255)
+    global windows_1
+    global windows_2
+    global windows_3
+    global windows_4
+    global windows_5
+    global windows_6
+    global windows_7
+    global windows_8
     draw_image = image.copy()
     image = image.copy().astype(np.float32)/255
 
 
-    y_start_stop = [380, 650] # Min and max in y to search in slide_window()
+    y_start_stop = [400, 660] # Min and max in y to search in slide_window()
 
-    windows_32 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+    windows_48 = slide_window(image, x_start_stop=[400, None], y_start_stop=[400, 660],
                         xy_window=(48, 48), xy_overlap=(0.5, 0.5))
-    windows_64 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+    windows_64 = slide_window(image, x_start_stop=[400, None], y_start_stop=[400, 660],
                         xy_window=(64, 64), xy_overlap=(0.5, 0.5))
-    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
+    windows_96 = slide_window(image, x_start_stop=[400, None], y_start_stop=[400, 660],
+                        xy_window=(96, 96), xy_overlap=(0.5, 0.5))
+    windows_128 = slide_window(image, x_start_stop=[400, None], y_start_stop=[400, 660],
                         xy_window=(128, 128), xy_overlap=(0.5, 0.5))
-    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop,
-                        xy_window=(256, 256), xy_overlap=(0.5, 0.5))
 
-    windows = windows_32 + windows_64 + windows_128
+
+    windows = windows_48 + windows_64 + windows_96 + windows_128
 
     hot_windows = search_windows(image, windows, svc, X_scaler, color_space=color_space,
                             spatial_size=spatial_size, hist_bins=hist_bins,
@@ -343,7 +398,26 @@ def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, 
                             hog_channel=hog_channel, spatial_feat=spatial_feat,
                             hist_feat=hist_feat, hog_feat=hog_feat)
 
-    window_img = draw_boxes(draw_image, hot_windows, color=(0, 255, 0), thickness=5)
+    # Average over several frames
+    windows_1 = windows_2 if windows_2 is not None else []
+    windows_2 = windows_3 if windows_3 is not None else []
+    windows_3 = windows_4 if windows_4 is not None else []
+    windows_4 = windows_5 if windows_5 is not None else []
+    windows_5 = hot_windows
+
+    all_windows = windows_1 + windows_2 + windows_3 + windows_4 + windows_5
+
+    heatmap = np.zeros_like(draw_image[:,:,0]).astype(np.float)
+    heatmap = add_heat(heatmap, all_windows)
+    heatmap = (apply_threshold(heatmap, 5)*255).astype('uint8')
+    labels = label(heatmap)
+
+    if displayType == 'detection':
+        window_img = draw_boxes(draw_image, hot_windows, color=(0, 255, 0), thickness=5)
+    if displayType == 'heatmap':
+        return cv2.cvtColor(heatmap, cv2.COLOR_GRAY2RGB)
+    if displayType == 'final':
+        window_img = draw_labeled_bboxes(draw_image, labels, color=(0, 255, 0), thickness=5)
     return window_img
 
 #------------------------------------------------------------------------------
@@ -360,11 +434,11 @@ def processVideo(clip, type):
     orient = 9  # HOG orientations
     pix_per_cell = 8 # HOG pixels per cell
     cell_per_block = 2 # HOG cells per block
-    hog_channel = 0#"ALL" # Can be 0, 1, 2, or "ALL"
+    hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
     spatial_size = (16, 16) # Spatial binning dimensions
     hist_bins = 16    # Number of histogram bins
-    spatial_feat = True # Spatial features on or off
-    hist_feat = True # Histogram features on or off
+    spatial_feat = False # Spatial features on or off
+    hist_feat = False # Histogram features on or off
     hog_feat = True # HOG features on or off
 
 
