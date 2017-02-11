@@ -384,10 +384,10 @@ def pipeline(image, svc, X_scaler, color_space='RGB', orient=9, pix_per_cell=8, 
     windows_48 = slide_window(image, x_start_stop=[600, None], y_start_stop=[380, 470],
                         xy_window=(48, 48), xy_overlap=(0.5, 0.5))
     windows_64 = slide_window(image, x_start_stop=[600, None], y_start_stop=[390, 520],
-                        xy_window=(64, 64), xy_overlap=(0.5, 0.5))
+                        xy_window=(64, 64), xy_overlap=(0.8, 0.8))
     windows_96 = slide_window(image, x_start_stop=[600, None], y_start_stop=[400, 580],
                         xy_window=(96, 96), xy_overlap=(0.8, 0.8))
-    windows_128 = slide_window(image, x_start_stop=[600, None], y_start_stop=[410, 640],
+    windows_128 = slide_window(image, x_start_stop=[600, None], y_start_stop=[410, 600],
                         xy_window=(128, 128), xy_overlap=(0.8, 0.8))
     windows_256 = slide_window(image, x_start_stop=[600, None], y_start_stop=[420, 680],
                         xy_window=(256, 256), xy_overlap=(0.5, 0.5))
@@ -433,7 +433,7 @@ def processVideo(clip, type):
     :return: processed video clip
     '''
     ### TODO: Tweak these parameters and see how the results change.
-    color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    color_space = 'HSV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
     orient = 9  # HOG orientations
     pix_per_cell = 8 # HOG pixels per cell
     cell_per_block = 2 # HOG cells per block
