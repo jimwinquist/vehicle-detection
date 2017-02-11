@@ -13,11 +13,14 @@ The goals / steps of this project are the following:
 [image1]: ./output_images/car_noncar1.png
 [image2]: ./output_images/car_noncar2.png
 [image3]: ./output_images/car_noncar3.png
-[image4]: ./output_images/hog_features.png
-[image5]: ./output_images/search_windows.png
-[image6]: ./output_images/detections.png
-[image7]: ./output_images/heatmap.png
-[image8]: ./output_images/final.png
+[image4]: ./output_images/hog_features1.png
+[image5]: ./output_images/hog_features2.png
+[image6]: ./output_images/hog_features3.png
+[image7]: ./output_images/hog_features4.png
+[image8]: ./output_images/search_windows.png
+[image9]: ./output_images/detections.png
+[image10]: ./output_images/heatmap.png
+[image11]: ./output_images/final.png
 [video1]: ./video/final.mp4
 
 ##Histogram of Oriented Gradients (HOG)
@@ -51,6 +54,9 @@ I experimented with a wide range of color spaces and different parameters for co
 Here is an example of the HOG features extracted using the final parameters I settled on for implementing my pipeline:
 
 ![alt text][image4]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
 
 ###Choosing HOG parameters.
 
@@ -67,7 +73,7 @@ The code for this step is contained in lines 152 through 221 of the file called 
 
 I tested out different window sizes looking for both the minimum window size that could accurately detect car positions, and the maximum window size that could accurately detect car positions. For the minimum window size I found that 48x48 windows worked relatively well, and for the maximum I chose 256x256. Then I chose three intermediate window sizes in between and staggered them to make sure that as the cars moved into the distance I could pick up subtle variations due to their depth in the image. Since the cars are constrained to the road way I also limited the search space to only look in the lower half of the image and not search areas that contain mostly sky, or trees or other environment features. For the overlap, I found that significant overlap didn't help that much for the largest and smallest window sizes where I used a window overlap of 0.5 but for 64x64 and 128x128 windows it really helped to increase the overlap to 0.8 to make sure that some detections weren't missed. However, this increased the time it took to do detection, so I may need to explore this more to find the right balance here.
 
-![alt text][image5]
+![alt text][image8]
 
 ###Vehicle Detection Pipeline
 
@@ -77,7 +83,7 @@ Ultimately I searched on 5 scales using HSV color space, 3-channel HOG features 
 
 Below is an example of the raw detections for a test image:
 
-![alt text][image6]
+![alt text][image9]
 ---
 
 ## Video Implementation
@@ -92,13 +98,13 @@ The code for this step is contained in lines 362 through 422 of the file called 
 After using the extracted features to make detections for each frame of the video, the other thing that was critical was to apply a heat map to accumulate and average detections over several frames of video. By applying a threshold to the averaged heat map, it made sure that only really strong detections were kept for the final output. This greatly reduces the number of false positives by eliminating detections that only occur on a single frame but aren't detected on subsequent frames. This leaves you with only the detections that are truly associated with a vehicle and allows you to group the heat map detections into discrete labels associated with multiple vehicles being detected. Using this final heat map I was able to draw the bounding boxes to accurately identify the vehicles in the image.
 
 ### Raw Detections
-![alt text][image6]
+![alt text][image9]
 
 ### Heat Map
-![alt text][image7]
+![alt text][image10]
 
 ### Final Bounding Boxes
-![alt text][image8]
+![alt text][image11]
 
 ---
 
